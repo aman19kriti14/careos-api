@@ -36,4 +36,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
 
 	// count appointments by patient
 	long countByPatientId(UUID patientId);
+
+	@Query("SELECT a FROM Appointment a WHERE a.patient.id = :patientId " + "AND a.doctor.id = :doctorId "
+			+ "ORDER BY a.scheduledAt DESC")
+	List<Appointment> findByPatientAndDoctor(UUID patientId, UUID doctorId);
 }

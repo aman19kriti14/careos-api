@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.careos.api.dto.AppointmentRequest;
 import com.careos.api.dto.AppointmentResponse;
+import com.careos.api.model.Appointment;
+import com.careos.api.repository.AppointmentRepository;
 import com.careos.api.service.AppointmentService;
 
 import jakarta.validation.Valid;
@@ -32,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AppointmentController {
 
 	private final AppointmentService appointmentService;
+	private final AppointmentRepository appointmentRepository;
 
 	// book new appointment
 	@PostMapping
@@ -79,5 +82,19 @@ public class AppointmentController {
 		} catch (RuntimeException e) {
 			return ResponseEntity.badRequest().body(e.getMessage());
 		}
+	}
+
+	// get all appointments for a specific patient
+	@GetMapping("/patient/{patientId}")
+	public ResponseEntity<List<AppointmentResponse>> getPatientAppointments(@PathVariable UUID doctorId,
+			@PathVariable UUID patientId) {
+		List<Appointment> appointments = appointmentRepository.findByPatientAndDoctor(patientId, doctorId);
+		List<AppointmentResponse> response = appointments.stream()
+				.map(a -> AppointmentResponse.builder().id(a.getId()).patientName(a.getPatient().getName())
+						.patientPhone(a.getPatient().getPhone()).patientAge(a.getPatient().getAge())
+						.reason(a.getReason()).scheduledAt(a.getScheduledAt()).status(a.getStatus()).notes(a.getNotes())
+						.smsSent(a.getSmsSent()).createdAt(a.getCreatedAt()).build())
+				.collect(java.util.stream.Collectors.toList());
+		return ResponseEntity.ok(response);
 	}
 }
